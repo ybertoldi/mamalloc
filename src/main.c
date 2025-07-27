@@ -2,26 +2,24 @@
 #include <stddef.h>
 #include <stdio.h>
 
-
-#define TODO(msg) assert(0 && msg);
-
 typedef char byte;
 #define M_SIZE 4096 
 #define FR_SIZE 100
 
+#define TODO(msg) assert(0 && msg);
+
+#define F_FMT "(pos=%ld, size=%ld)"
+#define F_ARG(f) ((byte *)(f).pos - mastack), (f).size
 typedef struct {
   void *pos;
   size_t size;
 } fr_blck;
-#define F_FMT "(pos=%ld, size=%ld)"
-#define F_ARG(f) ((byte *)(f).pos - mastack), (f).size
 
-static byte mastack[M_SIZE];
+static byte maheap[M_SIZE];
 static size_t mp = 0;
 
 static fr_blck free_blocks[FR_SIZE];
 static size_t fp = 0;
-
 
 void defrag_freeblks(void){
   TODO("implement defragmentation in freed blocks");
@@ -48,18 +46,20 @@ void *mamalloc_frblc(size_t n){
     return to_ret; 
 }
 
-void *mamalloc(size_t n){
-  if (n <= 0) 
+void *mamalloc(size_t n) {
+  void *ret;
+
+  if (n <= 0)
     return NULL;
 
-  if (n + mp >= M_SIZE) { // try to fit in freed_blocks
-    void *ret = mamalloc_frblc(n);
+  if (n + mp >= M_SIZE) { 
+    ret = mamalloc_frblc(n); // try to fit in freed_blocks
     if (ret) {
       return ret;
-    } else { 
+    } else {
       defrag_freeblks();
       ret = mamalloc_frblc(n);
-      
+
       if (!ret)
         printf("mamalloc: no space available for allocation");
 
@@ -67,7 +67,7 @@ void *mamalloc(size_t n){
     }
   }
 
-  void *ret = &mastack[mp];
+  ret = &maheap[mp];
   mp += n;
   return ret;
 }
@@ -85,7 +85,7 @@ void mafree(void *ptr, size_t size){
 
 void print_stak(void){
   for (size_t i = 0; i < mp ; i += 4) {
-    printf("%.4x ", *((int *)(&mastack[i])));    
+    printf("%.4x ", *((int *)(&maheap[i])));    
   }
   printf("\n");
 }
@@ -145,7 +145,7 @@ int main1() {
 
   printf("c = %d\n", c);
   printf("distance from b to the start of the array: %ld\n",
-         ((byte *)b - mastack));
+         ((byte *)b - maheap));
 
   printf("cur stack: \n");
   print_stak();
