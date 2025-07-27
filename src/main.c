@@ -29,13 +29,19 @@ void defrag_freeblks(void){
 void *mamalloc_frblc(size_t n){
     fr_blck cur;
     void *to_ret = NULL;
-    size_t to_rem = -1;
+    int to_rem = -1;
 
     for (int i = 0 ; i < fp; i++) {
       cur = free_blocks[i];    
-      if (cur.size <= n){
+      if (cur.size >= n){
         to_ret = cur.pos;   
-        to_rem = i;
+
+        if (cur.size == n){
+          to_rem = i;
+        } else {
+          free_blocks[i].pos = cur.pos + n;
+          free_blocks[i].size = cur.size - n;
+        }
         break;
       }
     }
@@ -121,9 +127,9 @@ int main(){
   *temp = 420;
 
   printf("allocating memory in a free block\n");
-  temp = mamalloc_frblc(sizeof(int));
-  printf("index of new allocated int on the heap %ld\n", POS(temp));
-  *temp = 69;
+  char * temp_c = mamalloc_frblc(sizeof(char));
+  printf("index of new allocated char on the heap %ld\n", (long) (temp_c - maheap));
+  *temp_c = 'a';
 
   printf("cur stack: \n");
   print_stak();
