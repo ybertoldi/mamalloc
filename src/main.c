@@ -9,7 +9,7 @@ typedef char byte;
 #define TODO(msg) assert(0 && msg);
 
 #define F_FMT "(pos=%ld, size=%ld)"
-#define F_ARG(f) ((byte *)(f).pos - mastack), (f).size
+#define F_ARG(f) ((byte *)(f).pos - maheap), (f).size
 typedef struct {
   void *pos;
   size_t size;
