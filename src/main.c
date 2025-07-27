@@ -7,6 +7,7 @@ typedef char byte;
 #define FR_SIZE 100
 
 #define TODO(msg) assert(0 && msg);
+#define POS(ptr) ((long) ((byte*)ptr - maheap))
 
 #define F_FMT "(pos=%ld, size=%ld)"
 #define F_ARG(f) ((byte *)(f).pos - maheap), (f).size
@@ -30,7 +31,7 @@ void *mamalloc_frblc(size_t n){
     void *to_ret = NULL;
     size_t to_rem = -1;
 
-    for (int i ; i < fp; i++) {
+    for (int i = 0 ; i < fp; i++) {
       cur = free_blocks[i];    
       if (cur.size <= n){
         to_ret = cur.pos;   
@@ -39,9 +40,12 @@ void *mamalloc_frblc(size_t n){
       }
     }
 
-    if (to_rem >= 0) 
+    if (to_rem >= 0) {
       for (int i = to_rem; i < fp - 1; i++) 
         free_blocks[i] = free_blocks[i+1];
+
+      fp--;
+    }
 
     return to_ret; 
 }
@@ -98,6 +102,34 @@ void print_freed(void){
 }
 
 int main(){
+  int *temp;
+  for (int i = 0; i < 20; i++) {
+    temp = mamalloc(4);
+    *temp = i * 5;
+    if (i % 5 == 0)
+      mafree(temp, sizeof(int));
+  }
+  printf("cur stack: \n");
+  print_stak();
+
+  printf("cur free blocks:\n");
+  print_freed();
+
+  printf("allocating memory in a free block\n");
+  temp = mamalloc_frblc(sizeof(int));
+  printf("index of new allocated int on the heap %ld\n", POS(temp));
+  *temp = 420;
+
+  printf("allocating memory in a free block\n");
+  temp = mamalloc_frblc(sizeof(int));
+  printf("index of new allocated int on the heap %ld\n", POS(temp));
+  *temp = 69;
+
+  printf("cur stack: \n");
+  print_stak();
+
+  printf("cur free blocks:\n");
+  print_freed();
 
   return 0;
 }
